@@ -4,7 +4,7 @@ export const db = new Dexie("j-roulette");
 
 db.version(1).stores({
   history: "++id, memberName, timestamp",
-  person: "id, name, age, balance, health, smart, looks, happiness"
+  person: "id, day, name, age, balance, health, smart, looks, happiness"
 });
 
 export const addHistory = async (history) => {
