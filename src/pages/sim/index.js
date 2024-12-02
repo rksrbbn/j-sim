@@ -1,16 +1,18 @@
-import { Button, Container, Typography, Modal, Box, TextField, useMediaQuery, useTheme } from '@mui/material';
+import { Button, Container, Typography, Modal, Box, TextField, useMediaQuery, useTheme, Select, MenuItem, InputLabel, Avatar, FormControl } from '@mui/material';
 import HeaderApp from '../../components/HeaderApp';
 import FooterApp from '../../components/FooterApp';
-// import { getHistory } from '../../db';
-import { db, addPerson, getPerson } from '../../db';
+import { db, getPerson, updatePerson } from '../../db';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mui/material';
+import { members } from '../../membersData';
 
 function Logs() {
     const navigate = useNavigate();
     const [person, setPerson] = useState([]);
     const [name, setName] = useState("");
+    const [oshi, setOshi] = useState("");
+    const [oshiObject, setOshiObject] = useState(null);
     const [open, setOpen] = useState(false);
     const isNew = localStorage.getItem('isNew');
 
@@ -30,7 +32,11 @@ function Logs() {
         } catch (error) {
           console.error(`Error mengupdate kolom ${columnName}:`, error);
         }
-      };
+    };
+
+    const searchMemberDataByAlias = (alias) => {
+        return members.find(member => member.alias === alias);
+    };
 
     useEffect(() => {
         getPerson().then((data) => {
@@ -45,18 +51,19 @@ function Logs() {
     }, []);
 
     const handleSave = () => {
-      if (name.trim()) {
+      if (name.trim() && oshi.trim()) {
         // Simpan nama di localStorage atau state lain
-        addPerson({ 
+        updatePerson(1,{ 
             id: 1,
             day: 1,
             name: name, 
             age: '20', 
-            balance: 100, 
+            balance: 100000, 
             health: 80, 
             smart: 90, 
             looks: 70, 
-            happiness: 75 
+            happiness: 75,
+            oshi: oshi
         }); 
         getPerson().then((data) => {
             setPerson(data);
@@ -66,6 +73,18 @@ function Logs() {
       } else {
         alert("Name cannot be empty!"); // Validasi jika nama kosong
       }
+    };
+
+    const nextDay = async () => {
+        try {
+            // Tambahkan uang terlebih dahulu
+            await updatePersonColumn(1, 'balance', person[0].balance + 25000);
+            // Setelah balance diperbarui, perbarui day
+            await updatePersonColumn(1, 'day', (person[0].day || 0) + 1);
+            console.log("Next day updated successfully");
+        } catch (error) {
+            console.error("Error in nextDay function:", error);
+        }
     };
 
     const theme = useTheme();
@@ -101,8 +120,14 @@ function Logs() {
         <div style={{ backgroundColor: '#FDECEF', minHeight: '100vh', marginTop: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <HeaderApp />
             <Container className="App" maxWidth="lg" style={{ textAlign: 'center', marginTop: '30px' }}>
-                <Typography variant='h4' style={{ background: 'linear-gradient(to right, red, purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}> {person.length > 0 ? person[0].name : "Loading..."}</Typography>
-                <small style={{color:'#f50057'}}>Day {person.length > 0 && person[0].day ? person[0].day : "1"}</small>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Avatar src={oshiObject.picture} alt={oshiObject.alias} style={{border: '2px solid #db5198'}} />
+                    <div>
+                        <Typography variant='h4' style={{ background: 'linear-gradient(to right, red, purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}> {person.length > 0 ? person[0].name : "Loading..."}</Typography>
+                        <small style={{color:'#f50057'}}>Day {person.length > 0 ? person[0].day : "1"}</small>
+                    </div>
+                    <div></div>
+                </div>
 
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent:'space-between', height:'20px', backgroundColor: 'white', borderRadius: '14px', padding: '10px', fontSize: { xs: '10px', sm: '12px', md: '14px', lg: '16px' } }} >
                 {person.length > 0 ? (
@@ -131,12 +156,22 @@ function Logs() {
                 </div>
 
                 <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', height:'250px', overflowY: 'auto', backgroundColor: 'white', borderRadius: '14px', padding: '10px' }}>
-                    <Typography textAlign={'left'} variant='h6' style={{ background: 'linear-gradient(to right, red, purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>[System]: This is your first day of becoming WOTA</Typography>
+                        {person.length > 0 ? (
+                        <Typography textAlign={'left'} variant='h7' style={{ background: 'linear-gradient(to right, red, purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            [System]: Welcome {person[0].name}. This is your first day as an {person[0].oshi} fan. You will got Rp. 25.000 per day as your daily balance. Spend it wisely!
+                        </Typography>
+                            
+                        ):
+                        (
+                            <small style={{color:'#f50057'}}>
+                                Loading...
+                            </small>
+                        )}
                 </div>
 
                 <Grid container spacing={2} justifyContent="center" style={{ marginTop: '20px', marginBottom:'20px', fontSize: { xs: '10px', sm: '12px', md: '14px', lg: '16px' } }}>
                     <Grid item xs={6} sm={6} md={4} lg={3}>
-                        <Button fullWidth variant='outlined' color='error' onClick={() => updatePersonColumn(1, 'balance', person[0].balance + 100000)}>ADD MONEY</Button>
+                        <Button fullWidth variant='outlined' color='error' onClick={() => nextDay()}>Next Day</Button>
                     </Grid>            
                     <Grid item xs={6} sm={6} md={4} lg={3}>
                         <Button fullWidth variant='outlined' color='error' onClick={() => updatePersonColumn(1, 'day', person[0].day + 1)}>ADD</Button>
@@ -170,10 +205,10 @@ function Logs() {
                     borderRadius: 2,
                 }}
                 >
-                <Typography id="modal-title" variant="h6" component="h2">
+                <Typography id="modal-title" variant="h6" component="h2" color='#f50057'>
                     Welcome!
                 </Typography>
-                <Typography id="modal-description" sx={{ mt: 2, mb: 2 }}>
+                <Typography color='#f50057' id="modal-description" sx={{ mt: 2, mb: 2 }}>
                     Please enter your name to continue.
                 </Typography>
                 <TextField
@@ -181,15 +216,55 @@ function Logs() {
                     fullWidth
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    color='error'
+                    style={{ marginBottom: '10px' }}
                 />
+                <FormControl fullWidth variant='filled'>
+                 <InputLabel id="member-select-label" sx={{ fontSize: { xs: '10px', sm: '12px', md: '14px', lg: '16px' } }}>Oshi</InputLabel>
+                <Select
+                        labelId="member-select-label"
+                        value={oshi}
+                        onChange={(event) => {
+                            const {
+                                target: { value },
+                            } = event;
+                            setOshi(value);
+                            setOshiObject(searchMemberDataByAlias(value));
+                        }}
+                      
+                        MenuProps={{
+                            PaperProps: {
+                            style: {
+                                maxHeight: 48 * 4.5 + 8,
+                                width: 250,
+                            },
+                            },
+                        }}
+                        >
+                        {members.sort((a, b) => a.alias.localeCompare(b.alias)).map((member) => (
+                            <MenuItem key={member.name} value={member.alias}>
+
+                            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar src={member.picture} alt={member.alias} />
+                                <p style={{ marginLeft: '10px' }}>{member.alias}</p>
+                                </div>
+                            </div>
+
+                            </MenuItem>
+                        ))}
+                        </Select>
+                
                 <Button
                     variant="contained"
                     sx={{ mt: 2 }}
                     onClick={handleSave}
                     fullWidth
+                    color='secondary'
                 >
                     Save
                 </Button>
+                </FormControl>
                 </Box>
             </Modal>
         </div>
