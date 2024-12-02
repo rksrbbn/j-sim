@@ -102,7 +102,7 @@ function Logs() {
             <HeaderApp />
             <Container className="App" maxWidth="lg" style={{ textAlign: 'center', marginTop: '30px' }}>
                 <Typography variant='h4' style={{ background: 'linear-gradient(to right, red, purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}> {person.length > 0 ? person[0].name : "Loading..."}</Typography>
-                <small style={{color:'#f50057'}}>Day {person.length > 0 ? person[0].day : "1"}</small>
+                <small style={{color:'#f50057'}}>Day {person.length > 0 && person[0].day ? person[0].day : "1"}</small>
 
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent:'space-between', height:'20px', backgroundColor: 'white', borderRadius: '14px', padding: '10px', fontSize: { xs: '10px', sm: '12px', md: '14px', lg: '16px' } }} >
                 {person.length > 0 ? (
